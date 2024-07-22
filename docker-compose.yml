@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16.1-alpine
+    tty: true
+    stdin_open: true
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+      DATABASE_URL: 
+    ports: 
+      - '5432:5432'
+
+  redis:
+    image: redis:7.2.1-alpine
+    ports:
+      - '6379:6379'
+
+  translation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: translation
+    ports:
+      - "3000:3000"
+    command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME}
+      REDIS_URL: ${REDIS_URL}
+      DEEPL_ACCEESS_KEY: ${DEEPL_ACCEESS_KEY}
+      BASE_DEEPL_URL: ${BASE_DEEPL_URL}
+
